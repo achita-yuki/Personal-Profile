@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="intro" id="intro" aria-hidden="true"><div class="intro-mark">AT</div><i></i></div>
 <a class="skip" href="#main" data-en="Skip to content">ข้ามไปที่เนื้อหา</a>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></symbol>
@@ -79,6 +80,12 @@
         <li><a class="social-link" href="https://line.me/ti/p/xNK7rD4b2B" target="_blank" rel="noopener noreferrer" aria-label="LINE"><svg class="i" aria-hidden="true"><use href="#i-line"/></svg></a></li>
       </ul>
       <p class="clock" id="clock" aria-hidden="true"></p>
+      <div class="swatches" role="group" aria-label="สีธีม" data-aria-en="Accent colour">
+        <button class="sw" type="button" data-acc="mint" style="--sw:#5eead4" aria-pressed="true" aria-label="มิ้นต์" data-aria-en="Mint"></button>
+        <button class="sw" type="button" data-acc="rose" style="--sw:#fb7185" aria-pressed="false" aria-label="โรส" data-aria-en="Rose"></button>
+        <button class="sw" type="button" data-acc="amber" style="--sw:#fbbf24" aria-pressed="false" aria-label="อำพัน" data-aria-en="Amber"></button>
+        <button class="sw" type="button" data-acc="blue" style="--sw:#60a5fa" aria-pressed="false" aria-label="ฟ้า" data-aria-en="Blue"></button>
+      </div>
       <div class="side-tools">
         <button class="tool-btn" id="cmdBtn" type="button" aria-label="ค้นหาและคำสั่งด่วน (Ctrl+K)" data-aria-en="Quick search (Ctrl+K)" title="Ctrl + K"><svg class="i" aria-hidden="true"><use href="#i-search"/></svg></button>
         <button class="tool-btn" id="langBtn" type="button" aria-label="เปลี่ยนภาษา / Switch language">EN</button>
@@ -114,6 +121,11 @@
       <div class="marquee" aria-hidden="true"><div class="marquee-track">
         <span>HTML</span><span>CSS</span><span>JAVASCRIPT</span><span>PYTHON</span><span>PANDAS</span><span>MACHINE LEARNING</span><span>ESP32</span><span>ARDUINO</span><span>IOT</span><span>INDEXEDDB</span>
         <span>HTML</span><span>CSS</span><span>JAVASCRIPT</span><span>PYTHON</span><span>PANDAS</span><span>MACHINE LEARNING</span><span>ESP32</span><span>ARDUINO</span><span>IOT</span><span>INDEXEDDB</span>
+      </div></div>
+
+      <div class="marquee rev" aria-hidden="true"><div class="marquee-track">
+        <span>PROGRAMMING</span><span>WEB DEVELOPMENT</span><span>IOT</span><span>MACHINE LEARNING</span><span>DATA ANALYSIS</span><span>LEARNING BY BUILDING</span>
+        <span>PROGRAMMING</span><span>WEB DEVELOPMENT</span><span>IOT</span><span>MACHINE LEARNING</span><span>DATA ANALYSIS</span><span>LEARNING BY BUILDING</span>
       </div></div>
 
       <section class="stats" aria-label="สถิติ" data-aria-en="Stats">
@@ -182,7 +194,8 @@
             <input class="form-input" id="fEmail" type="email" placeholder="you@example.com" required autocomplete="email">
           </div>
           <label class="sr" for="fMsg" data-en="Message">ข้อความ</label>
-          <textarea class="form-input" id="fMsg" placeholder="อยากคุยเรื่องอะไร บอกได้เลย" data-en-ph="What would you like to talk about?" required></textarea>
+          <textarea class="form-input" id="fMsg" placeholder="อยากคุยเรื่องอะไร บอกได้เลย" data-en-ph="What would you like to talk about?" required maxlength="500"></textarea>
+          <p class="counter" aria-hidden="true"><span id="msgCount">0</span>/500</p>
           <p class="note" data-en="Pressing send opens your email app with this message ready.">กดส่งแล้วจะเปิดแอปอีเมลของคุณพร้อมข้อความนี้</p>
           <button class="form-btn" type="submit" id="sendBtn" disabled><svg class="i" aria-hidden="true"><use href="#i-send"/></svg><span data-en="Send message">ส่งข้อความ</span></button>
         </form>
@@ -202,6 +215,7 @@
     </div>
     <div class="m-info">
       <h3 class="h3" id="mTitle"></h3><ul class="chips" id="mTags"></ul><p id="mSum"></p><ul class="points" id="mList"></ul><div id="mLink"></div>
+      <div class="m-nav"><button id="mPrev" type="button" aria-label="ผลงานก่อนหน้า" data-aria-en="Previous project"><svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></button><span id="mCount" aria-live="polite"></span><button id="mNext" type="button" aria-label="ผลงานถัดไป" data-aria-en="Next project"><svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></button></div>
     </div>
   </section>
 </div>
