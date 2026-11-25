@@ -175,10 +175,18 @@ function openProject(id) {
     ? current.images.map((s, i) => `<button class="thumb" type="button" data-i="${i}" aria-label="${L('ดูภาพที่', 'View image')} ${i + 1}"><img src="${s}" alt=""></button>`).join('') : '';
   const lk = current.link, lbl = lk && ((lang === 'en' && current.en && current.en.linkLabel) || lk.label);
   $('#mLink').innerHTML = lk ? `<a class="link-btn" href="${lk.url}" target="_blank" rel="noopener noreferrer">${lbl}<svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg><span class="sr">${L(' (เปิดแท็บใหม่)', ' (opens in a new tab)')}</span></a>` : '';
+  const ix = PROJECTS.indexOf(current); $('#mCount').textContent = `${ix + 1} / ${PROJECTS.length}`;
   setMain(0);
   modal.hidden = false; document.body.classList.add('lock'); setInert(true);
   $('.modal-close-btn', modal).focus();
 }
+function stepProject(d) {
+  if (!current) return;
+  const n = PROJECTS.length, nx = PROJECTS[(PROJECTS.indexOf(current) + d + n) % n], keep = lastFocus;
+  openProject(nx.id); lastFocus = keep;
+}
+$('#mPrev').addEventListener('click', () => stepProject(-1));
+$('#mNext').addEventListener('click', () => stepProject(1));
 function closeModal() {
   modal.hidden = true; document.body.classList.remove('lock'); setInert(false);
   if (lastFocus) lastFocus.focus();
@@ -195,6 +203,7 @@ $('#lbClose').addEventListener('click', e => { e.stopPropagation(); closeLightbo
 lightbox.addEventListener('click', closeLightbox);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (!lightbox.hidden) closeLightbox(); else if (!modal.hidden) closeModal(); return; }
+  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !modal.hidden && lightbox.hidden) { stepProject(e.key === 'ArrowRight' ? 1 : -1); return; }
   if (e.key !== 'Tab' || modal.hidden) return;
   if (!lightbox.hidden) { e.preventDefault(); $('#lbClose').focus(); return; }
   const f = $$('button, a[href]', $('.project-modal')).filter(x => x.offsetParent !== null);
@@ -209,10 +218,12 @@ document.addEventListener('keydown', e => {
   const form = $('#contactForm'), btn = $('#sendBtn'), to = $('a[href^="mailto:"]').getAttribute('href').replace('mailto:', '');
   const check = () => { btn.disabled = !form.checkValidity(); };
   form.addEventListener('input', check); check();
+  $('#fMsg').addEventListener('input', e => { $('#msgCount').textContent = e.target.value.length; });
   form.addEventListener('submit', e => {
     e.preventDefault();
     const name = $('#fName').value.trim(), mail = $('#fEmail').value.trim(), msg = $('#fMsg').value.trim();
     const subject = L(`ติดต่อจากเว็บ Portfolio – ${name}`, `Message from your portfolio – ${name}`);
+    if (!fxOff) { btn.classList.add('fly'); setTimeout(() => btn.classList.remove('fly'), 900); }
     location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`${msg}\n\n— ${name} (${mail})`)}`;
   });
 })();
@@ -303,6 +314,7 @@ $('#printBtn').addEventListener('click', () => print());
     PROJECTS.forEach(p => add(L('ผลงาน', 'Project'), p.title, `${p.tags.join(' ')} ${p.summary}`, () => { showPage('portfolio', true); openProject(p.id); }));
     add(ac, L('สลับโหมดสว่าง / มืด', 'Toggle light / dark'), 'theme dark light ธีม สว่าง มืด', () => toggleTheme(innerWidth / 2, 0));
     add(ac, L('เปลี่ยนภาษา (English)', 'Switch to Thai (ภาษาไทย)'), 'language english thai ภาษา', () => applyLang(lang === 'en' ? 'th' : 'en'));
+    Object.keys(ACCENTS).forEach(k => add(ac, L('เปลี่ยนสีธีม: ', 'Accent colour: ') + L(ACCENTS[k][0], ACCENTS[k][1]), 'accent color colour theme สี ธีม ' + k, () => setAccent(k, true)));
     add(ac, L('เปิด/ปิดเอฟเฟกต์', 'Toggle effects'), 'motion animation effects เอฟเฟกต์ แอนิเมชัน', () => setFx(fxOff, true));
     add(ac, L('คัดลอกอีเมล', 'Copy email'), 'email mail copy อีเมล คัดลอก', () => copyText('achitat6@gmail.com'));
     add(ac, L('ดาวน์โหลดเรซูเม่ (PDF)', 'Download resume (PDF)'), 'resume cv pdf download เรซูเม่ ดาวน์โหลด', () => $('#resumeBtn').click());
@@ -541,6 +553,27 @@ if (fine) {
   }, { passive: true });
   document.addEventListener('pointerleave', () => ring.classList.remove('on'));
 }
+
+/* ===== ลูกเล่นชุดที่ 4 ===== */
+// สีธีม 4 แบบ (จำค่าไว้)
+const ACCENTS = { mint: ['มิ้นต์', 'Mint'], rose: ['โรส', 'Rose'], amber: ['อำพัน', 'Amber'], blue: ['ฟ้า', 'Blue'] };
+function setAccent(n, save) {
+  if (!ACCENTS[n]) n = 'mint';
+  if (n === 'mint') root.removeAttribute('data-accent'); else root.dataset.accent = n;
+  $$('.sw').forEach(b => b.setAttribute('aria-pressed', b.dataset.acc === n));
+  if (save) { try { localStorage.setItem('accent', n); } catch (e) {} sparkBurst(innerWidth / 2, 80, 8); }
+}
+$$('.sw').forEach(b => b.addEventListener('click', () => setAccent(b.dataset.acc, true)));
+let savedAcc = 'mint'; try { savedAcc = localStorage.getItem('accent') || 'mint'; } catch (e) {}
+setAccent(savedAcc, false);
+window.ACCENTS = ACCENTS; window.setAccent = setAccent;
+
+// หน้าเปิดเว็บ: แสดงครั้งเดียวต่อการเปิดแท็บ
+(function intro() {
+  const el = $('#intro'); if (!el) return;
+  let seen = false; try { seen = sessionStorage.getItem('seen') === '1'; sessionStorage.setItem('seen', '1'); } catch (e) {}
+  if (seen || fxOff) el.remove(); else setTimeout(() => el.remove(), 1700);
+})();
 
 applyLang(lang);
 showPage(location.hash.slice(1));
