@@ -3,8 +3,8 @@
   --bg:#0a0f1f;--card:#111a30;--card2:#17223d;--line:#26335a;
   --tx:#f3f6ff;--mu:#cdd5ea;--mu2:#9fabc9;
   --ac:#5eead4;--ac2:#a78bfa;--onac:#06121f;
-  --grad:linear-gradient(to right,#5eead4,#a78bfa);
-  --glow:linear-gradient(to bottom right,rgba(94,234,212,.22),rgba(167,139,250,0) 60%);
+  --grad:linear-gradient(to right,var(--ac),var(--ac2));
+  --glow:linear-gradient(to bottom right,color-mix(in srgb,var(--ac) 22%,transparent),transparent 60%);
   --err:#ff8a8a;
   --sh1:-4px 8px 24px hsla(0,0%,0%,.25);--sh2:0 16px 30px hsla(0,0%,0%,.25);--sh5:0 24px 80px hsla(0,0%,0%,.25);
   --ff:'Poppins','Prompt',system-ui,sans-serif;
@@ -15,8 +15,8 @@
   --bg:#eef1fa;--card:#fff;--card2:#f4f6fc;--line:#d8def0;
   --tx:#121830;--mu:#3a4361;--mu2:#4d5675;
   --ac:#0f766e;--ac2:#6d28d9;--onac:#fff;
-  --grad:linear-gradient(to right,#0f766e,#6d28d9);
-  --glow:linear-gradient(to bottom right,rgba(15,118,110,.16),rgba(109,40,217,0) 60%);
+  --grad:linear-gradient(to right,var(--ac),var(--ac2));
+  --glow:linear-gradient(to bottom right,color-mix(in srgb,var(--ac) 16%,transparent),transparent 60%);
   --err:#b42318;
   --sh1:-4px 8px 24px rgba(30,40,90,.08);--sh2:0 16px 30px rgba(30,40,90,.08);--sh5:0 24px 80px rgba(30,40,90,.14);
 }
@@ -416,3 +416,50 @@ article.active[data-dir="l"]{animation:inL .5s cubic-bezier(.2,.8,.2,1) backward
 html.nofx .cursor-ring,html.nofx .trail{display:none}
 html.nofx .tilt-card{transform:none!important}
 @media print{.progress,.to-top,.term,.clock,.cursor-ring{display:none!important}}
+
+/* ========== ลูกเล่นชุดที่ 4 ========== */
+/* เปลี่ยนสีธีมได้ (ชุดสีคู่ ac / ac2 ทั้งโหมดมืดและสว่าง) */
+[data-accent="rose"]{--ac:#fb7185;--ac2:#fbbf24;--onac:#2a0710}
+[data-accent="amber"]{--ac:#fbbf24;--ac2:#fb7185;--onac:#241800}
+[data-accent="blue"]{--ac:#60a5fa;--ac2:#5eead4;--onac:#06142b}
+[data-theme="light"][data-accent="rose"]{--ac:#be123c;--ac2:#b45309;--onac:#fff}
+[data-theme="light"][data-accent="amber"]{--ac:#b45309;--ac2:#be123c;--onac:#fff}
+[data-theme="light"][data-accent="blue"]{--ac:#1d4ed8;--ac2:#0f766e;--onac:#fff}
+.swatches{display:flex;justify-content:center;gap:6px;margin-top:12px}
+.sw{position:relative;width:36px;height:36px;border-radius:50%;background:none;display:grid;place-items:center}
+.sw::before{content:"";width:22px;height:22px;border-radius:50%;background:var(--sw);border:2px solid var(--card);box-shadow:0 0 0 1px var(--line);transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.sw:hover::before{transform:scale(1.2)}
+.sw[aria-pressed="true"]::before{box-shadow:0 0 0 2px var(--tx)}
+@media(pointer:coarse){.sw{width:44px;height:44px}}
+/* หน้าเปิดเว็บ */
+.intro{position:fixed;inset:0;z-index:200;display:grid;place-items:center;align-content:center;gap:22px;background:var(--bg);animation:introOut .55s ease 1s forwards}
+.intro-mark{font:600 54px/1 var(--ff);letter-spacing:.04em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;animation:introPop .8s cubic-bezier(.2,.9,.3,1.2) backwards}
+.intro i{display:block;width:160px;height:3px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}
+.intro i::after{content:"";position:absolute;inset:0;background:var(--grad);transform:scaleX(0);transform-origin:0 50%;animation:introBar .9s ease forwards}
+@keyframes introPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes introBar{to{transform:scaleX(1)}}
+@keyframes introOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+@media(prefers-reduced-motion:reduce){.intro{display:none}}
+html.nofx .intro{display:none}
+/* แถบเลื่อนแถวที่ 2 วิ่งสวนทาง */
+.marquee.rev{margin-top:0;border-top:0}
+.marquee.rev .marquee-track{animation-direction:reverse;animation-duration:34s}
+.marquee.rev span{color:var(--ac2)}
+/* แถบทักษะ: ประกายวิ่ง */
+.bar i{position:relative;overflow:hidden}
+.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);animation:sheen 3.2s ease-in-out infinite}
+/* ไอคอนบริการเด้งเมื่อชี้ */
+.service-icon-box{transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.service-item:hover .service-icon-box{transform:rotate(-8deg) scale(1.12)}
+/* ปุ่ม ผลงานก่อนหน้า/ถัดไป ใน modal */
+.m-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.m-nav button{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--card2);border:1px solid var(--line);color:var(--ac);font-size:18px;transition:var(--t)}
+.m-nav button:hover{border-color:var(--ac);transform:translateY(-2px)}
+#mPrev .i{transform:rotate(180deg)}
+#mCount{font-size:var(--fs8);color:var(--mu2)}
+/* ฟอร์ม: ตัวนับ + เครื่องบินกระดาษบินออก */
+.counter{margin:-8px 0 10px;text-align:right;font-size:var(--fs8);color:var(--mu2)}
+.form-btn.fly .i{animation:fly .8s ease-in forwards}
+@keyframes fly{40%{transform:translate(8px,-8px) scale(1.2)}to{transform:translate(60px,-60px) scale(.4);opacity:0}}
+html.nofx .intro,html.nofx .bar i::after{display:none}
+@media print{.intro,.swatches,.m-nav{display:none!important}}
