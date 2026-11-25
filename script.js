@@ -95,11 +95,15 @@ function stagger(page) {
 }
 function showPage(name, push) {
   if (!pages.some(p => p.dataset.page === name)) name = 'about';
+  const prevP = pages.find(p => p.classList.contains('active')), order0 = navs.map(n => n.dataset.nav);
+  const dir = prevP && prevP.dataset.page !== name ? (order0.indexOf(name) > order0.indexOf(prevP.dataset.page) ? 'r' : 'l') : '';
   pages.forEach(p => { const on = p.dataset.page === name; p.hidden = !on; p.classList.toggle('active', on); });
   navs.forEach(n => { const on = n.dataset.nav === name; n.classList.toggle('active', on); on ? n.setAttribute('aria-current', 'page') : n.removeAttribute('aria-current'); });
   if (push) { history.replaceState(null, '', '#' + name); scrollTo(0, 0); }
   const cur = pages.find(p => p.dataset.page === name); stagger(cur);
-  if (name === 'about') runStats();
+  if (dir) cur.dataset.dir = dir;
+  if (name === 'about') { runStats(); window.runTerm && window.runTerm(); }
+  dispatchEvent(new Event('pagechange'));
 }
 navs.forEach(n => n.addEventListener('click', () => showPage(n.dataset.nav, true)));
 addEventListener('hashchange', () => showPage(location.hash.slice(1)));
@@ -153,7 +157,7 @@ function renderBars() {
 /* ===== Modal รายละเอียดผลงาน + Gallery + Lightbox ===== */
 const modal = $('#modal'), mMain = $('#mMain'), lightbox = $('#lightbox');
 let current = null, lastFocus = null;
-const setInert = on => $$('main,.skip').forEach(el => el.toggleAttribute('inert', on));
+const setInert = on => $$('main,.skip,#toTop').forEach(el => el.toggleAttribute('inert', on));
 function setMain(i) {
   delete mMain.dataset.fb;
   mMain.src = current.images[i];
@@ -235,7 +239,7 @@ function applyLang(l) {
   });
   const lb = $('#langBtn'); lb.textContent = lang === 'en' ? 'TH' : 'EN'; lb.title = lang === 'en' ? 'ภาษาไทย' : 'English';
   metaDesc.content = lang === 'en' ? EN_DESC : TH_DESC;
-  renderProjects(); renderBars();
+  renderProjects(); renderBars(); window.onLang && window.onLang();
   if (current && !modal.hidden) { const i = Math.max(0, $$('.thumb').findIndex(t => t.classList.contains('on'))); openProject(current.id); setMain(i); }
 }
 $('#langBtn').addEventListener('click', () => applyLang(lang === 'en' ? 'th' : 'en'));
@@ -423,6 +427,120 @@ if (fine) {
   const orig = document.title;
   document.addEventListener('visibilitychange', () => { document.title = document.hidden ? L('กลับมาดูผลงานกันก่อนนะ', 'Come back and see my work!') : orig; });
 })();
+
+/* ===== ลูกเล่นชุดที่ 3 ===== */
+// 1) แถบความคืบหน้าการเลื่อน + ปุ่มกลับขึ้นบน (วงแหวนวิ่งตามตำแหน่ง)
+(function progress() {
+  const bar = $('#progBar'), top = $('#toTop'); let tick = false;
+  function upd() {
+    tick = false;
+    const max = Math.max(1, document.documentElement.scrollHeight - innerHeight), k = Math.min(1, scrollY / max);
+    bar.style.transform = `scaleX(${k})`;
+    top.style.setProperty('--off', (119.4 * (1 - k)).toFixed(1));
+    top.classList.toggle('show', scrollY > 400);
+  }
+  addEventListener('scroll', () => { if (!tick) { tick = true; requestAnimationFrame(upd); } }, { passive: true });
+  addEventListener('resize', upd);
+  top.addEventListener('click', () => scrollTo({ top: 0, behavior: reduceMotion || fxOff ? 'auto' : 'smooth' }));
+  window.addEventListener('pagechange', upd); upd();
+})();
+
+// 2) นาฬิกา + คำทักทายตามช่วงเวลา
+(function clock() {
+  const el = $('#clock');
+  function render() {
+    const d = new Date(), h = d.getHours(), hm = String(h).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const g = h >= 5 && h < 12 ? L('สวัสดีตอนเช้า', 'Good morning') : h < 17 && h >= 12 ? L('สวัสดีตอนบ่าย', 'Good afternoon') : h >= 17 && h < 20 ? L('สวัสดีตอนเย็น', 'Good evening') : L('ราตรีสวัสดิ์', 'Good night');
+    el.innerHTML = `${g} · <b>${hm}</b>`;
+  }
+  render(); setInterval(render, 20000); window.renderClock = render;
+})();
+
+// 3) เทอร์มินัลสรุปข้อมูล (พิมพ์ทีละบรรทัด; ใช้ข้อมูลจริง)
+(function terminal() {
+  const body = $('#termBody'); let token = 0;
+  const lines = () => [
+    ['whoami', 'achita-thawontash'],
+    ['cat school.txt', L('วิทยาลัยเทคนิคลพบุรี · ปวส. ปี 2 · เทคโนโลยีคอมพิวเตอร์', 'Lopburi Technical College · Pvs. Year 2 · Computer Technology')],
+    ['ls interests/', 'programming/  web/  iot/  machine-learning/'],
+    ['ls projects/ | wc -l', String(PROJECTS.length)],
+    ['echo $LOOKING_FOR', L('ที่ฝึกงานด้านไอที พัฒนาโปรแกรม และ IoT', 'internship in IT, software development and IoT')]
+  ];
+  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const row = (c, o, caret) => `<span class="p">$</span> <span class="c">${esc(c)}</span>${caret ? '<i class="caret"></i>' : ''}\n${o != null ? `<span class="o">${esc(o)}</span>\n` : ''}`;
+  function renderStatic() { body.innerHTML = lines().map(([c, o]) => row(c, o)).join(''); }
+  function run() {
+    const my = ++token; renderStatic();
+    if (fxOff) return;
+    const data = lines(); let html = '', i = 0;
+    body.innerHTML = '';
+    (function nextLine() {
+      if (my !== token) return;
+      if (i >= data.length) { body.innerHTML = html + `<span class="p">$</span> <i class="caret"></i>`; return; }
+      const [c, o] = data[i]; let j = 0;
+      (function type() {
+        if (my !== token) return;
+        body.innerHTML = html + row(c.slice(0, ++j), null, true);
+        if (j < c.length) setTimeout(type, 38);
+        else setTimeout(() => { html += row(c, o); body.innerHTML = html; i++; setTimeout(nextLine, 260); }, 220);
+      })();
+    })();
+  }
+  window.runTerm = run;
+  const prevOnLang = window.onLang;
+  window.onLang = () => { prevOnLang && prevOnLang(); window.renderClock && window.renderClock(); renderStatic(); };
+  renderStatic();
+})();
+
+// 4) เมนู: กดเลข 1–4 เพื่อสลับหน้า
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (!modal.hidden || !$('#cmd').hidden) return;
+  const i = '1234'.indexOf(e.key);
+  if (i > -1 && navs[i]) showPage(navs[i].dataset.nav, true);
+});
+
+// 5) อวตาร์: กดแล้วหมุน + ประกาย
+(function avatar() {
+  const box = $('.avatar-box');
+  box.addEventListener('click', () => {
+    if (fxOff) return;
+    box.classList.remove('spin'); void box.offsetWidth; box.classList.add('spin');
+    const r = box.getBoundingClientRect(); sparkBurst(r.left + r.width / 2, r.top + r.height / 2, 14);
+  });
+  box.addEventListener('animationend', e => { if (e.animationName === 'flip') box.classList.remove('spin'); });
+})();
+
+// 6) การ์ด (สถิติ / บริการ / ทักษะ) เอียงตามเมาส์ + วงแหวนเคอร์เซอร์ + หางประกาย (เฉพาะเครื่องที่มีเมาส์)
+if (fine) {
+  const TILT = '.stat,.service-item,.skill-groups>li,.skills-list,.content-card';
+  $$(TILT).forEach(el => el.classList.add('tilt-card'));
+  document.addEventListener('pointermove', e => {
+    if (fxOff || !e.target.closest) return;
+    const c = e.target.closest('.tilt-card'); if (!c) return;
+    const r = c.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
+    c.classList.add('tilting');
+    c.style.transform = `perspective(800px) rotateX(${-py * 6}deg) rotateY(${px * 8}deg) translateY(-3px)`;
+  }, { passive: true });
+  document.addEventListener('pointerout', e => {
+    const c = e.target.closest && e.target.closest('.tilt-card'); if (!c || c.contains(e.relatedTarget)) return;
+    c.classList.remove('tilting'); c.style.transform = '';
+  });
+  const ring = $('#ring'); let rx = 0, ry = 0, rtx = 0, rty = 0, rraf = 0, lastT = 0;
+  const loop = () => { rx += (rtx - rx) * .2; ry += (rty - ry) * .2; ring.style.transform = `translate(${rx}px,${ry}px)`; rraf = Math.abs(rtx - rx) + Math.abs(rty - ry) > .4 ? requestAnimationFrame(loop) : 0; };
+  addEventListener('pointermove', e => {
+    if (fxOff) return;
+    rtx = e.clientX; rty = e.clientY; ring.classList.add('on'); if (!rraf) rraf = requestAnimationFrame(loop);
+    ring.classList.toggle('hot', !!(e.target.closest && e.target.closest('button,a,.project-item,input,textarea,.cmd-list li')));
+    const n = performance.now();
+    if (n - lastT > 55) {
+      lastT = n; const d = document.createElement('i'); d.className = 'trail';
+      d.style.cssText = `--x:${e.clientX}px;--y:${e.clientY}px;--c:${COLORS[(n / 55 | 0) % 2]}`;
+      document.body.append(d); d.addEventListener('animationend', () => d.remove());
+    }
+  }, { passive: true });
+  document.addEventListener('pointerleave', () => ring.classList.remove('on'));
+}
 
 applyLang(lang);
 showPage(location.hash.slice(1));
